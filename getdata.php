@@ -2,6 +2,7 @@
 include "simple_html_dom.php";
 include "config.php";
 include "locallib.php";
+header('Content-Type: text/html; charset=utf-8');
 
 $mainpageurl = "http://www.cned.cl/public/secciones/seccionestadisticas/Estadisticas_Instituciones.aspx?opcBusquedaCSE=9_3_3";
 
@@ -11,7 +12,7 @@ $page = file_get_html($mainpageurl);
 
 
 $universidades = array();
-echo "gola";
+
 // Find all links
 foreach($page->find("table[width='90%']") as $row){
 
@@ -30,14 +31,13 @@ foreach($page->find("table[width='90%']") as $row){
 			foreach ($infopage->find("a[href^=JavaScript:VerDetalleSede]") as $sedes){
 			
 				$universidad = array(
-						"name" => $td->find("td")[0],
-						"ubicacion" => $sedes->plaintext,
-						"web" => $td->find("td")[2]
+						"name" => $td->find("td")[0]->plaintext,
+						"location" => $sedes->plaintext,
+						"web" => $td->find("td")[2]->plaintext
 				);
-				echo "llamada para guardar".$td->find("td")[0];
-				// inserta todas las universidades con sus respectivas sedes.
-				insert_data($universidad, $conexion);
 				
+				// inserta todas las universidades con sus respectivas sedes.
+				insert_data($universidad, $mysqli);				
 			
 			}
 
@@ -46,4 +46,5 @@ foreach($page->find("table[width='90%']") as $row){
 	}
 
 }
-mysqli_close();
+
+$mysqli->close();

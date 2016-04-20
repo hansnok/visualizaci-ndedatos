@@ -1,50 +1,60 @@
 <?php
 
-function insert_data($data, $conexion){
-	echo "estoy en la funcion 1 ";
+function insert_data($data, $mysqli){
 	// comprueba que lo que desea guardar no exista en la base de datos previamente
-	if(!exist_data($data, $conexion)){
-		echo "deberia guardar - ";
+	if(!exist_data($data, $mysqli)){
 		
-		$queryinsert = "INSERT INTO universidades (nombre, ubicacion, web)
-				VALUES ('".$data['name']."', '".$data['ubicacion']."', '".$data['web']."')";
-		echo $queryinsert;
-		$resultado = mysqli_query($conexion, "INSERT INTO universidades VALUES (NULL, '".$data['name']."', '".$data['ubicacion']."', '".$data['web']."', NULL)");
-		if($resultado){
-			echo "guardado <br>";
-			printf("La selección devolvió %d filas.\n", $resultado->num_rows);
-			
-			/* liberar el conjunto de resultados */
-			//$resultado->close();
-			return TRUE;
-		}else{
-			echo "caca <br>";
-			return FALSE;
+		$name = "'" . $mysqli->real_escape_string($data["name"]) . "'";	
+		$location = "'" . $mysqli->real_escape_string($data["location"]) . "'";
+		$web = "'" . $mysqli->real_escape_string($data["web"]) . "'";
+		
+		$queryinsert = "INSERT INTO universidades (nombre, ubicacion, web) VALUES ($name, $location, $web)";
+		
+		$resultado = $mysqli->query($queryinsert);
+
+		if($resultado === FALSE){
+			 printf("Errorcode: %d\n", $mysqli->errno);
 		}
+		//else{
+			//echo "Insertado <br>";
+		//}
 		
-	}else{
-		return FALSE;
 	}
+	//else{
+		//echo "ya existe en la base de datos <br>";
+	//}
 }
 
-function exist_data($data, $conexion){
+function exist_data($data, $mysqli){
 	
-	$query = "SELECT *
+	$name = "'" . $mysqli->real_escape_string($data["name"]) . "'";	
+	$location = "'" . $mysqli->real_escape_string($data["location"]) . "'";
+	
+	$sql = "SELECT *
 			FROM universidades
-			WHERE nombre = '".$data["name"]."'";
+			WHERE nombre = $name AND ubicacion = $location";
 	
-	$universidad = mysqli_query($conexion, $query);
-	//$universidad =  $conexion->query($query);
+	$universidad = $mysqli->query($sql);
 	
-	if($universidad ){
-		echo "La selección devolvió %d filas.\n".$universidad->num_rows;
-		
-		/* liberar el conjunto de resultados */
-		//$universidad->close();
-		return TRUE;
-	}else{
-		echo "retorna malo";
+	if($universidad === FALSE){
+		 printf("Errorcode: %d\n", $mysqli->errno);
+
 		return FALSE;
+	
+	}else{
+		
+		$rows_returned = $universidad->num_rows;
+		
+		if($rows_returned > 0){
+			//echo " * la universidad existe";
+			return TRUE;
+		}else{
+			//echo "* la universidad no  existe";
+			return FALSE;
+		}
 	}
 	
 }
+
+
+
