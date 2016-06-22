@@ -3,8 +3,8 @@
 // conexión a la base de datos
 
 $server = "localhost";
-$user = "local";
-$pass =  "local";
+$user = "root";
+$pass =  "123123";
 $bbdd = "data";
 
 //new mysqli('localhost', $usuario, $contraseña, $bbdd);

@@ -3,6 +3,8 @@
 
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Universidades de Chile</title>
 
         <link rel="stylesheet" href="css/ammap.css" type="text/css">
@@ -13,10 +15,14 @@
 		<script src="js/jquery-2.2.4.min.js" type="text/javascript"></script>
 		
 		<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false&libraries=places"></script>
+		
+		 <!-- Bootstrap core CSS -->
+    	<link href="css/bootstrap.min.css" rel="stylesheet">
+    	<link href="css/cover.css" rel="stylesheet">
 
 		<script>
 			var mapChile;
-
+			
 			// svg path for target icon
 			var targetSVG = "M9,0C4.029,0,0,4.029,0,9s4.029,9,9,9s9-4.029,9-9S13.971,0,9,0z M9,15.93 c-3.83,0-6.93-3.1-6.93-6.93S5.17,2.07,9,2.07s6.93,3.1,6.93,6.93S12.83,15.93,9,15.93 M12.5,9c0,1.933-1.567,3.5-3.5,3.5S5.5,10.933,5.5,9S7.067,5.5,9,5.5 S12.5,7.067,12.5,9z";
 
@@ -99,12 +105,15 @@
 			    mapChile.addListener("clickMapObject", function (event) {
 				    //document.getElementById("placeholder").innerHTML = '<img src="http://lorempixel.com/200/200/city/' + event.mapObject.customData + '/" />';
 				    //alert(event.mapObject.customData);
-				    var address = event.mapObject.customData;
-				   // $("autocomplete").val(address);
-				    //search();
-				    initialize(event.mapObject.latitude, event.mapObject.longitude)				    
+				   // $("").val(address);
+				    //search();			    
+				    initialize(event.mapObject.latitude, event.mapObject.longitude)		
+				    $("#title").text(event.mapObject.title + " - " + event.mapObject.customData +" - ");
+				    $("#latitud").text(event.mapObject.latitude);
+				    $("#longitud").text(event.mapObject.longitude);
+				    $("#addressuniversity").text(event.mapObject.customData);		    
 			  });
-
+	
 			});
 
 
@@ -263,26 +272,109 @@
 		    return content;
 		  }
 
+		 
+
+		  function initializeOnClick(addressuniversity, addressresidence, latitud, longitud) {
+			  var directionsService = new google.maps.DirectionsService();
+			  var directionsDisplay = null;
+			    var routeMap = null;
+			    var oldDirections = [];
+			    var currentDirections = null;
+	  		var myOptions = {
+		      zoom: 7,
+		      center: new google.maps.LatLng(latitud, longitud),
+		      mapTypeId: google.maps.MapTypeId.ROADMAP
+		    }
+		    routeMap = new google.maps.Map(document.getElementById("map2_canvas"), myOptions);
+
+		    directionsDisplay = new google.maps.DirectionsRenderer({
+		        'map': routeMap,
+		        'preserveViewport': true,
+		        'draggable': true
+		    });
+		    directionsDisplay.setPanel(document.getElementById("directions_panel"));
+
+		    google.maps.event.addListener(directionsDisplay, 'directions_changed',
+		      function() {
+		        if (currentDirections) {
+		          oldDirections.push(currentDirections);
+		          setUndoDisabled(false);
+		        }
+		        currentDirections = directionsDisplay.getDirections();
+		      });
+
+		    setUndoDisabled(true);
+		    calcRoute(addressuniversity, addressresidence);
+		 
+
+		  function calcRoute(addressuniversity, addressresidence) {
+			var start = addressresidence;
+			var end = addressuniversity;
+		    var request = {
+		        origin:start,
+		        destination:end,
+		        travelMode: google.maps.DirectionsTravelMode.DRIVING
+		    };
+		    directionsService.route(request, function(response, status) {
+		      if (status == google.maps.DirectionsStatus.OK) {
+		        directionsDisplay.setDirections(response);
+		      }
+		    });
+		  }
+
+
+		  function setUndoDisabled(value) {
+		    document.getElementById("undo").disabled = value;
+		  }
 		  
+		 }
+		 function loadmap(){
+			var addressuniversity = $("#addressuniversity").text();
+			var addressresidence = $("#address").val();
+			var university =  $("#title").text();
+			//alert(university);
+			if(addressresidence != "" && university != "Universidad - "){
+				$("#openmap").show();
+				resizeCanvas();
+				$("#directions_panel").empty();
+				var latitud = $("#latitud").text();
+				var longitud = $("#longitud").text();
+				//alert("latitud: "+latitud+"// longitud"+longitud);
+				initializeOnClick(addressuniversity, addressresidence, latitud, longitud);
+			}
+		}
+
+		function resizeCanvas(){
+			//$("#map_canvas").removeClass("col-md-9").addClass("col-md-4");
+			//$("#listing").removeClass("col-md-3").addClass("col-md-2");
+			$("#mapdiv").height(120);
+			$("#listdiv").height(120);
+		}
+
+		function openMap(){
+			var altura = $("#mapdiv").height();
+			if(altura == 120){
+				//abrir mapa
+				$("#mapdiv").height(400);
+				$("#listdiv").height(400);
+				$("#openmap").hide();
+				$("#ruta").hide();
+				$("#directions_panel").empty();
+			}
+		}
+
+		$("#undo").hide();
 
         </script>
         
 		<style>
 		#map_canvas {
-		  position: absolute;
-		  width: 70%;
 		  height: 280px;
-		  top: 415px;
-		  left: 8px;
 		  border: 1px solid grey;
 		}
 		#listing {
-		  position: absolute;
-		  width: 25%;
 		  height: 280px;
 		  overflow: auto;
-		  left: 915px;
-		  top: 415px;
 		  cursor: pointer;
 		}
 		.placeIcon {
@@ -295,11 +387,7 @@
 		  border-collapse: collapse;
 		}
 		#locationField {
-		  width: 25%;
 		  height: 25px;
-		  top: 450px;
-		  left: 0px;
-		  position: absolute;
 		}
 		
 		</style>
@@ -307,10 +395,31 @@
     </head>
     
 <body onload="initialize(-33.45, -70.65)">
-    <div>
-        <div id="listdiv" style="width:200px; overflow:auto; height:400px; float:right; background-color:#FFFFFF;"></div>
-        <div id="mapdiv" style="margin-right:200px; background-color:#E4EFFF; height: 400px;"></div>
-        
+    <div class=row>
+        <div class="col-md-3" id="listdiv" style="overflow:auto; height:400px; background-color:#FFFFFF;"></div>
+        <div class="col-md-9" id="mapdiv" style="background-color:#E4EFFF; height: 400px;"></div>
+    </div>
+    <br>
+    <div class="row">
+		<div class="col-md-12">
+	    	 <form class="form-inline">
+			  <div class="form-group col-md-12">
+			  	<label id="title" for="university">Universidad - </label>
+			  		
+			  	<label id="longitud" style="display: none;"></label>
+			  	<label id="latitud" style="display: none;"></label>
+			  	
+			    <label for="address">Dirección Residencia</label>			 
+			    <input  type="text" class="form-control" id="address" placeholder="Mi dirección de residencia">
+			    <button type="button" onclick="loadmap()" class="btn btn-success">Mostrar</button>
+			    <button id="openmap" type="button" onclick="openMap()" class="btn btn-primary" style="display: none;">Abrir mapa</button>
+		  
+			  </div>
+			</form>
+		</div>
+    </div>
+   
+    <div class="row">
         <div id="locationField">
 		    <input id="autocomplete" type="hidden" value = ""/>
 		</div>
@@ -320,11 +429,26 @@
 		    	<input type="hidden" name="type" value="establishment" onclick="search()" checked="checked"/>
 		    </form>
 		 </div>
-		 
-  	     <div id="map_canvas"></div>
- 		 <div id="listing"><table id="resultsTable"><tbody id="results"></tbody></table></div>
-
+		 <label id="addressuniversity" style="display:none;" ></label>
+  	     <div class="col-md-8" id="map_canvas"></div>
+ 		 <div class="col-md-4" id="listing" style="color:black;"><table id="resultsTable"><tbody id="results"></tbody></table></div>
+ 		 
+ 		 <div id="ruta" onload="initializeOnClick()">
+ 		 <div class="col-md-12" style="height: 10px;"></div>
+			<div class="col-md-8" id="map2_canvas" style="height:280px;"></div>
+			
+			<div class="col-md-4" style="height:280px;overflow:auto;cursor: pointer;color:white;">
+			  <button id="undo" style="display:none;margin:auto" ">
+			  </button>
+			  <div id="directions_panel" style="width:100%;color:white;"></div>
+			</div>
+			
+		</div>
     </div>
+    
+    
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="js/bootstrap.min.js"></script>
 </body>
 
 </html>
